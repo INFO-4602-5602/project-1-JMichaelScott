@@ -1,0 +1,522 @@
+<html>
+<head>
+<title>Project 0</title>
+<link rel="stylesheet" type="text/css" href="project1.css"></link>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<!--Put your D3 import statement between these two lines-->
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+<!--Put your D3 import statement between these two lines-->
+</head>
+
+<body>
+	<div id="partOne">
+        <h1>Part One: </h1>
+
+  </div>
+
+    <div id="partTwo">
+        <h1>Part Two: </h1>
+        <div id="scatterplot">
+            <p id="scatterLabel"></p>
+        </div>
+	</div>
+
+    <div id="partThree">
+        <h1>Part Three &amp; Four: </h1>
+        <div id="linegraph">
+        </div>
+	</div>
+
+    <div id="partFive">
+        <h1>Part Five: </h1>
+        <div id="scatterplotSet">
+          <!-- http://www.d3noob.org/2013/07/arranging-more-than-one-d3js-graph-on.html -->
+          <div id="area1">
+          </div>
+          <div id="area2">
+          </div>
+        </div>
+	</div>
+
+</body>
+
+<script type="text/javascript">
+    // Put your part one code here ***********************
+    // http://codeofrob.com/entries/stop-using-relative-paths-in-your-javascripts.html
+    var imp1 = d3.csv("./data/anscombe_I.csv", function(error, data){
+      if (error) throw error;
+      checkDataset(data)
+    });
+    var imp2 = d3.csv("./data/anscombe_II.csv", function(error, data){
+      if (error) throw error;
+      checkDataset(data)
+    });
+    var imp3 = d3.csv("./data/anscombe_III.csv", function(error, data){
+      if (error) throw error;
+      checkDataset(data)
+    });
+    var imp4 = d3.csv("./data/anscombe_IV.csv", function(error, data){
+      if (error) throw error;
+      checkDataset(data)
+    });
+
+    // Leave this to test your data uploading. All data uploading should be above this line
+    function checkDataset(dataset) {
+        if (dataset.length == 11)
+            $("#partOne").append("<p>data loaded correctly</p>");
+        else
+            $("#partOne").append("<p>data loaded incorrectly. Try using the debugger to help you find the bug!</p>");
+    }
+
+    var w = 700; // Width of our visualization
+    var h = 500; // Height of our visualization
+    var xOffset = 40; // Space for x-axis labels
+    var yOffset = 100; // Space for y-axis labels
+    var margin = 10; // Margin around visualization
+    var vals = ['x', 'y']; // List of data attributes
+    var xVal = vals[0]; // Value to plot on x-axis
+    var yVal = vals[1]; // Value to plot on y-axis
+
+    var margin = {top:20, right:20, bottom: 30, left: 50};
+    var width = 960-margin.left - margin.right;
+    var height = 500-margin.top - margin.bottom;
+
+    // Origin is in the upper left corner, not bottom left.
+    var x = d3.scaleLinear().range([0, width]);
+    var y = d3.scaleLinear().range([height, 0]);
+
+    var svg  = d3.select("#scatterplot").append("svg")
+       .attr("width", width + margin.left + margin.right)
+       .attr("height", height + margin.top + margin.bottom)
+       .append("g")
+       .attr("transform", "translate("+margin.left +
+       "," + margin.top +")");
+
+    // http://bl.ocks.org/weiglemc/6185069
+    var tooltip = d3.select("#scatterplot").append("div")
+       .attr("class", "tooltip")
+       .style("opacity", 0);
+
+    var circl = d3.select("#scatterplot").append("div")
+      .attr("fill", "red")
+      .style("opacity", 0);
+
+    d3.csv("./data/anscombe_I.csv", function(error, data){
+      if (error) throw error;
+      //
+      // Scale the range of the data
+      x.domain([3,d3.max(data, function(d) {return parseFloat(d[xVal]);})]);
+      y.domain([0, d3.max(data, function(d) {return parseFloat(d[yVal]);})]);
+      // Add the scatterplot points
+      svg.selectAll("circle")
+         .data(data)
+         .enter()
+         .append("circle")
+         .attr("r", 5)
+         .attr("cx", function(d) {return x(d[xVal]);})
+         .attr("cy", function(d) {return y(d[yVal]);})
+         .attr("fill","lightblue")
+         // http://bl.ocks.org/weiglemc/6185069
+         .on("click", function(d) {
+            tooltip.transition()
+              .duration(200)
+              .style("opacity", .9);
+            tooltip.html("(" + d[xVal] + "," + d[yVal] + ")")
+              .style("left", (d3.event.pageX + 5) + "px")
+              .style("top", (d3.event.pageY - 28) + "px")
+          })
+          // https://stackoverflow.com/questions/10805184/show-data-on-mouseover-of-circle
+          .on("mouseover", function (d) {
+              d3.select(this).transition()
+              .attr("fill","red")
+          })
+          .on("mouseout", function(d) {
+              d3.select(this).transition()
+              .attr("fill","lightblue")
+          });
+      // Add the X Axis - version 4 notation for axis
+      svg.append("g")
+         .attr("transform", "translate(0, "+ height +")")
+         .call(d3.axisBottom(x));
+      // Add the Y Axis - version 4 notation for axis
+      svg.append("g")
+         .call(d3.axisLeft(y));
+
+      var xLabel = svg.append("text")
+                      .attr("class", "label")
+                      .text(xVal)
+                      .attr("x", width - 20)
+                      .attr("y", height - 10)
+
+      var xLabel = svg.append("text")
+                      .attr("class", "label")
+                      .text(yVal)
+                      .attr("y",  - 10)
+                      .attr("transform","rotate(90)")
+                      .style("text-anchor", "start");
+    });
+
+    // https://bl.ocks.org/mbostock/3883245
+    var svg2 = d3.select("#linegraph").append("svg")
+       .attr("width", width + margin.left + margin.right)
+       .attr("height", height + margin.top + margin.bottom)
+       .append("g")
+       .attr("transform", "translate("+margin.left + "," + margin.top +")");
+
+    var line = d3.line()
+      .x(function(d) {return x(d.x);})
+      .y(function(d) {return y(d.y);});
+    // http://www.jeromecukier.net/blog/2012/05/28/manipulating-data-like-a-boss-with-d3/
+    d3.csv("./data/anscombe_I.csv", function(error, data){
+      if (error) throw error;
+
+      data.sort(function(a,b) { return b.x-a.x;});
+      x.domain([3, d3.max(data, function(d) {return parseFloat(d[xVal]);})]);
+      y.domain([0, d3.max(data, function(d) {return parseFloat(d[yVal]);})]);
+
+      svg2.append("g")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(x));
+
+      svg2.append("g")
+        .call(d3.axisLeft(y));
+
+      svg2.append("path")
+        .datum(data)
+        .attr("fill", "none")
+        .attr("stroke", "steelblue")
+        .attr("stroke-linejoin", "round")
+        .attr("stroke-linecap", "round")
+        .attr("stroke-width", 1.5)
+        .attr("d", line);
+
+        var xLabel = svg2.append("text")
+                        .attr("class", "label")
+                        .text(xVal)
+                        .attr("x", width - 20)
+                        .attr("y", height - 10)
+
+        var xLabel = svg2.append("text")
+                        .attr("class", "label")
+                        .text(yVal)
+                        .attr("y",  - 10)
+                        .attr("transform","rotate(90)")
+                        .style("text-anchor", "start");
+
+    });
+
+    var svg3 = d3.select("#area1").append("svg")
+       .attr("width", (width + margin.left + margin.right)/2+20)
+       .attr("height", (height + margin.top + margin.bottom)/2+20)
+       .append("g")
+       .attr("transform", "translate("+margin.left + "," + margin.top +")");
+
+   d3.csv("./data/anscombe_I.csv", function(error, data){
+     if (error) throw error;
+     //
+     var x = d3.scaleLinear().range([0, width/2]);
+     var y = d3.scaleLinear().range([height/2, 0]);
+     // Scale the range of the data
+     x.domain([3,d3.max(data, function(d) {return parseFloat(d[xVal]);})]);
+     y.domain([0, d3.max(data, function(d) {return parseFloat(d[yVal]);})]);
+     // Add the scatterplot points
+     svg3.selectAll("circle")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("r", 5)
+        .attr("cx", function(d) {return x(d[xVal]);})
+        .attr("cy", function(d) {return y(d[yVal]);})
+        .attr("fill","lightblue")
+        // http://bl.ocks.org/weiglemc/6185069
+        .on("click", function(d) {
+           tooltip.transition()
+             .duration(200)
+             .style("opacity", .9);
+           tooltip.html("(" + d[xVal] + "," + d[yVal] + ")")
+             .style("left", (d3.event.pageX + 5) + "px")
+             .style("top", (d3.event.pageY - 28) + "px")
+         })
+         // https://stackoverflow.com/questions/10805184/show-data-on-mouseover-of-circle
+         .on("mouseover", function (d) {
+             d3.select(this).transition()
+             .attr("fill","red")
+         })
+         .on("mouseout", function(d) {
+             d3.select(this).transition()
+             .attr("fill","lightblue")
+         });
+     // Add the X Axis - version 4 notation for axis
+     svg3.append("g")
+        .attr("transform", "translate(0, "+ height/2 +")")
+        .call(d3.axisBottom(x));
+     // Add the Y Axis - version 4 notation for axis
+     svg3.append("g")
+        .call(d3.axisLeft(y));
+
+     //http://www.d3noob.org/2013/01/adding-title-to-your-d3js-graph.html
+     svg3.append("text")
+         .attr("x", (width/4))
+         .attr("y", 0 - (margin.top / 2))
+         .attr("text-anchor", "middle")
+         .text("anscombe_I")
+
+     var xLabel = svg3.append("text")
+                     .attr("class", "label")
+                     .text(xVal)
+                     .attr("x", width/2 - 20)
+                     .attr("y", height/2 - 10)
+
+     var xLabel = svg3.append("text")
+                     .attr("class", "label")
+                     .text(yVal)
+                     .attr("y",  - 10)
+                     .attr("transform","rotate(90)")
+                     .style("text-anchor", "start");
+   });
+
+    var svg4 = d3.select("#area1").append("svg")
+       .attr("width", (width + margin.left + margin.right)/2+20)
+       .attr("height", (height + margin.top + margin.bottom)/2+20)
+       .append("g")
+       .attr("transform", "translate("+margin.left + "," + margin.top +")");
+
+  d3.csv("./data/anscombe_II.csv", function(error, data){
+         if (error) throw error;
+         //
+         var x = d3.scaleLinear().range([0, width/2]);
+         var y = d3.scaleLinear().range([height/2, 0]);
+         // Scale the range of the data
+         x.domain([3,d3.max(data, function(d) {return parseFloat(d[xVal]);})]);
+         y.domain([0, d3.max(data, function(d) {return parseFloat(d[yVal]);})]);
+         // Add the scatterplot points
+         svg4.selectAll("circle")
+            .data(data)
+            .enter()
+            .append("circle")
+            .attr("r", 5)
+            .attr("cx", function(d) {return x(d[xVal]);})
+            .attr("cy", function(d) {return y(d[yVal]);})
+            .attr("fill","lightblue")
+            // http://bl.ocks.org/weiglemc/6185069
+            .on("click", function(d) {
+               tooltip.transition()
+                 .duration(200)
+                 .style("opacity", .9);
+               tooltip.html("(" + d[xVal] + "," + d[yVal] + ")")
+                 .style("left", (d3.event.pageX + 5) + "px")
+                 .style("top", (d3.event.pageY - 28) + "px")
+             })
+             // https://stackoverflow.com/questions/10805184/show-data-on-mouseover-of-circle
+             .on("mouseover", function (d) {
+                 d3.select(this).transition()
+                 .attr("fill","red")
+             })
+             .on("mouseout", function(d) {
+                 d3.select(this).transition()
+                 .attr("fill","lightblue")
+             });
+         // Add the X Axis - version 4 notation for axis
+         svg4.append("g")
+            .attr("transform", "translate(0, "+ height/2 +")")
+            .call(d3.axisBottom(x));
+         // Add the Y Axis - version 4 notation for axis
+         svg4.append("g")
+            .call(d3.axisLeft(y));
+
+        //http://www.d3noob.org/2013/01/adding-title-to-your-d3js-graph.html
+        svg4.append("text")
+            .attr("x", 250)
+            .attr("y", 0 - (margin.top / 2))
+            .attr("text-anchor", "middle")
+            .text("anscombe_II")
+
+         var xLabel = svg4.append("text")
+                         .attr("class", "label")
+                         .text(xVal)
+                         .attr("x", width/2 - 20)
+                         .attr("y", height/2 - 10)
+
+         var xLabel = svg4.append("text")
+                         .attr("class", "label")
+                         .text(yVal)
+                         .attr("y",  - 10)
+                         .attr("transform","rotate(90)")
+                         .style("text-anchor", "start");
+       });
+
+     var svg5 = d3.select("#area2").append("svg")
+        .attr("width", (width + margin.left + margin.right)/2+20)
+        .attr("height", (height + margin.top + margin.bottom)/2+20)
+        .append("g")
+        .attr("transform", "translate("+margin.left + "," + margin.top +")");
+
+     d3.csv("./data/anscombe_III.csv", function(error, data){
+          if (error) throw error;
+          //
+          var x = d3.scaleLinear().range([0, width/2]);
+          var y = d3.scaleLinear().range([height/2, 0]);
+          // Scale the range of the data
+          x.domain([3,d3.max(data, function(d) {return parseFloat(d[xVal]);})]);
+          y.domain([0, d3.max(data, function(d) {return parseFloat(d[yVal]);})]);
+          // Add the scatterplot points
+          svg5.selectAll("circle")
+             .data(data)
+             .enter()
+             .append("circle")
+             .attr("r", 5)
+             .attr("cx", function(d) {return x(d[xVal]);})
+             .attr("cy", function(d) {return y(d[yVal]);})
+             .attr("fill","lightblue")
+             // http://bl.ocks.org/weiglemc/6185069
+             .on("click", function(d) {
+                tooltip.transition()
+                  .duration(200)
+                  .style("opacity", .9);
+                tooltip.html("(" + d[xVal] + "," + d[yVal] + ")")
+                  .style("left", (d3.event.pageX + 5) + "px")
+                  .style("top", (d3.event.pageY - 28) + "px")
+              })
+              // https://stackoverflow.com/questions/10805184/show-data-on-mouseover-of-circle
+              .on("mouseover", function (d) {
+                  d3.select(this).transition()
+                  .attr("fill","red")
+              })
+              .on("mouseout", function(d) {
+                  d3.select(this).transition()
+                  .attr("fill","lightblue")
+              });
+          // Add the X Axis - version 4 notation for axis
+          svg5.append("g")
+             .attr("transform", "translate(0, "+ height/2 +")")
+             .call(d3.axisBottom(x));
+          // Add the Y Axis - version 4 notation for axis
+          svg5.append("g")
+             .call(d3.axisLeft(y));
+
+         //http://www.d3noob.org/2013/01/adding-title-to-your-d3js-graph.html
+         svg5.append("text")
+             .attr("x", (width/4))
+             .attr("y", 0 - (margin.top / 2))
+             .attr("text-anchor", "middle")
+             .text("anscombe_III")
+
+          var xLabel = svg5.append("text")
+                          .attr("class", "label")
+                          .text(xVal)
+                          .attr("x", width/2 - 20)
+                          .attr("y", height/2 - 10)
+
+          var xLabel = svg5.append("text")
+                          .attr("class", "label")
+                          .text(yVal)
+                          .attr("y",  - 10)
+                          .attr("transform","rotate(90)")
+                          .style("text-anchor", "start");
+        });
+
+     var svg6 = d3.select("#area2").append("svg")
+        .attr("width", (width + margin.left + margin.right)/2+20)
+        .attr("height", (height + margin.top + margin.bottom)/2+20)
+        .append("g")
+        .attr("transform", "translate("+margin.left + "," + margin.top +")");
+
+    d3.csv("./data/anscombe_IV.csv", function(error, data){
+         if (error) throw error;
+         //
+         var x = d3.scaleLinear().range([0, width/2]);
+         var y = d3.scaleLinear().range([height/2, 0]);
+         // Scale the range of the data
+         x.domain([3,d3.max(data, function(d) {return parseFloat(d[xVal]);})]);
+         y.domain([0, d3.max(data, function(d) {return parseFloat(d[yVal]);})]);
+         // Add the scatterplot points
+         svg6.selectAll("circle")
+            .data(data)
+            .enter()
+            .append("circle")
+            .attr("r", 5)
+            .attr("cx", function(d) {return x(d[xVal]);})
+            .attr("cy", function(d) {return y(d[yVal]);})
+            .attr("fill","lightblue")
+            // http://bl.ocks.org/weiglemc/6185069
+            .on("click", function(d) {
+               tooltip.transition()
+                 .duration(200)
+                 .style("opacity", .9);
+               tooltip.html("(" + d[xVal] + "," + d[yVal] + ")")
+                 .style("left", (d3.event.pageX + 5) + "px")
+                 .style("top", (d3.event.pageY - 28) + "px")
+             })
+             // https://stackoverflow.com/questions/10805184/show-data-on-mouseover-of-circle
+             .on("mouseover", function (d) {
+                 d3.select(this).transition()
+                 .attr("fill","red")
+             })
+             .on("mouseout", function(d) {
+                 d3.select(this).transition()
+                 .attr("fill","lightblue")
+             });
+         // Add the X Axis - version 4 notation for axis
+         svg6.append("g")
+            .attr("transform", "translate(0, "+ height/2 +")")
+            .call(d3.axisBottom(x));
+         // Add the Y Axis - version 4 notation for axis
+         svg6.append("g")
+            .call(d3.axisLeft(y));
+
+        //http://www.d3noob.org/2013/01/adding-title-to-your-d3js-graph.html
+        svg6.append("text")
+            .attr("x", 250)
+            .attr("y", 0 - (margin.top / 2))
+            .attr("text-anchor", "middle")
+            .text("anscombe_IV")
+
+
+         var xLabel = svg6.append("text")
+                         .attr("class", "label")
+                         .text(xVal)
+                         .attr("x", width/2 - 20)
+                         .attr("y", height/2 - 10)
+
+         var xLabel = svg6.append("text")
+                         .attr("class", "label")
+                         .text(yVal)
+                         .attr("y",  - 10)
+                         .attr("transform","rotate(90)")
+                         .style("text-anchor", "start");
+       });
+
+    function getNextVal(val) {
+      return vals[(vals.indexOf(val) + 1) % vals.length];
+    };
+
+    // A function to change what values we plot on the x-axis
+    function setXval(val) {
+      // Update xVal
+      xVal = val;
+      // Update the axis
+      xScale.domain([d3.min(data, function(d) { return parseFloat(d[xVal]); })-1,
+               d3.max(data, function(d) { return parseFloat(d[xVal]); })+1])
+      xAxis.scale(xScale);
+      xAxisG.call(xAxis);
+      xLabel.text(xVal);
+      // Update the points
+
+    };
+
+    // A function to change what values we plot on the y-axis
+    function setYval(val) {
+      // Update yVal
+      yVal = val;
+      // Update the axis
+      yScale.domain([d3.min(data, function(d) { return parseFloat(d[yVal]); })-1,
+               d3.max(data, function(d) { return parseFloat(d[yVal]); })+1])
+      yAxis.scale(yScale);
+      yAxisG.call(yAxis);
+      yLabel.text(yVal);
+      // Update the points
+
+    };
+</script>
+
+</html>
